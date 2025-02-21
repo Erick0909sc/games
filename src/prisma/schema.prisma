@@ -13,15 +13,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -43,11 +42,11 @@ model User {
   password      String?
   image         String?
   accounts      Account[]
-  sessions      Session[]
+  cart          Cart?
   favorites     Favorite[]
   reviews       Review[]
+  sessions      Session[]
   transactions  Transaction[]
-  cart          Cart? // Relación uno a uno con Cart
 }
 
 model Cart {
@@ -78,20 +77,20 @@ model Product {
   rating       Float
   quantity     Int
   disabled     Boolean       @default(false)
-  category     String // Agregamos el campo "category" de tipo String
-  console      String? // Agregamos el campo "console" de tipo String opcional
+  category     String
+  console      String?
+  cartItems    CartItem[]
   favorites    Favorite[]
   reviews      Review[]
-  transactions Transaction[]
-  cartItems    CartItem[]
+  transactions Transaction[] @relation("ProductToTransaction")
 }
 
 model Favorite {
   id        Int     @id @default(autoincrement())
-  userId    Int
   productId Int
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Review {
@@ -100,8 +99,8 @@ model Review {
   commentary String
   rating     Float
   userId     Int
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
@@ -110,13 +109,7 @@ model Transaction {
   approved Boolean   @default(false)
   cost     Float
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
-}
-
-enum Roles {
-  user
-  admin
-  employed
+  products Product[] @relation("ProductToTransaction")
 }
 
 model VerificationToken {
@@ -125,4 +118,10 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Roles {
+  user
+  admin
+  employed
 }
